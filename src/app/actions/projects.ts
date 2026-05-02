@@ -14,19 +14,30 @@ export async function getProjects() {
   }
 }
 
+import { put } from "@vercel/blob";
+
 export async function createProject(formData: FormData) {
   const title = formData.get("title") as string;
   const category = formData.get("category") as string;
-  const image = formData.get("image") as string; // URL de l'image (sera géré par upload plus tard)
-  const description = formData.get("location") as string;
+  const location = formData.get("location") as string;
+  const imageFile = formData.get("image") as File;
 
   try {
+    let imageUrl = "";
+
+    if (imageFile && imageFile.size > 0) {
+      const blob = await put(imageFile.name, imageFile, {
+        access: 'public',
+      });
+      imageUrl = blob.url;
+    }
+
     await prisma.project.create({
       data: {
         title,
         category,
-        image,
-        description,
+        image: imageUrl,
+        description: location,
       }
     });
     revalidatePath("/realisations");
@@ -34,7 +45,7 @@ export async function createProject(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error("Failed to create project:", error);
-    return { success: false, error: "Erreur lors de la création" };
+    return { success: false, error: "Erreur lors de la création ou de l'upload" };
   }
 }
 

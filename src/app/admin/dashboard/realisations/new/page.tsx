@@ -99,19 +99,25 @@ export default function NewProjectPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">URL de l'image (Provisoire)</label>
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Photo du chantier</label>
             <div className="relative">
-              <Camera className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <input 
-                name="image"
-                required
-                placeholder="/images/realisations/votre-photo.jpg"
-                className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
-              />
+              <div className="w-full flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] p-12 hover:border-primary/40 hover:bg-primary/5 transition-all group cursor-pointer relative overflow-hidden">
+                <input 
+                  type="file" 
+                  name="image"
+                  required
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                <div className="text-center group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Upload size={32} />
+                  </div>
+                  <p className="text-sm font-black text-slate-600 dark:text-slate-300">Cliquez pour choisir une photo</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">PNG, JPG jusqu'à 5MB</p>
+                </div>
+              </div>
             </div>
-            <p className="text-[10px] text-slate-400 font-bold ml-2 uppercase tracking-wide">
-              * Le système d'upload direct (Vercel Blob) sera activé au déploiement final.
-            </p>
           </div>
 
           <div className="pt-6">
