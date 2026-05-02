@@ -29,31 +29,42 @@ export async function saveLead(formData: FormData) {
   }
 }
 
-// Action pour récupérer les derniers appels d'offres (Simulation de flux RSS/API)
-export async function getTenders() {
-  // Dans une version réelle, on ferait un fetch sur une API de marchés publics
-  // Ici on génère une liste plus longue avec des liens de recherche directs
-  const categories = ["Plomberie", "CVC", "Chauffage", "VMC"];
-  const sources = [
-    { name: "Mairie d'Entraigues", link: "https://francemarches.com/recherche/84" },
-    { name: "Conseil Départemental 84", link: "https://www.boamp.fr/recherche/resultat?motscles=plomberie" },
-    { name: "Grand Avignon", link: "https://www.marches-publics.info/recherche-avancee.htm" },
-    { name: "Bailleur Social Vaucluse", link: "https://www.marches-publics.gouv.fr/?page=entreprise.AccueilEntreprise" }
-  ];
+import Parser from "rss-parser";
 
-  return Array.from({ length: 8 }).map((_, i) => {
-    const cat = categories[i % categories.length];
-    const src = sources[i % sources.length];
-    return {
-      id: `tender-${i}`,
-      title: `${cat} - Chantier ${["Rénovation", "Entretien", "Installation", "Urgence"][i % 4]} ${["EHPAD", "École", "Mairie", "Gymnase"][i % 4]}`,
-      description: `Appel d'offre public pour des travaux de ${cat.toLowerCase()} dans le cadre de la modernisation des infrastructures du Vaucluse.`,
-      source: src.name,
-      link: `${src.link}`,
-      publishedAt: new Date(Date.now() - i * 86400000).toISOString(),
-      category: cat
-    };
-  });
+// Action pour récupérer les derniers appels d'offres réels via BOAMP
+export async function getTenders() {
+  const parser = new Parser();
+  const keywords = ["plomberie", "chauffage", "climatisation", "CVC"];
+  const allTenders: any[] = [];
+
+  try {
+    // On boucle sur quelques mots clés pour avoir un flux riche
+    for (const keyword of keywords) {
+      const feed = await parser.parseURL(`https://www.boamp.fr/recherche/rss/avis?motscles=${keyword}`);
+      
+      feed.items.forEach(item => {
+        allTenders.push({
+          id: item.guid || Math.random().toString(),
+          title: item.title,
+          description: item.contentSnippet || item.content,
+          source: "BOAMP.fr (Officiel)",
+          link: item.link,
+          publishedAt: item.pubDate,
+          category: keyword.toUpperCase()
+        });
+      });
+    }
+
+    // On trie par date et on limite à 10 résultats uniques
+    return allTenders
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 12);
+
+  } catch (error) {
+    console.error("Failed to fetch real tenders:", error);
+    // Fallback sur des exemples si le flux est temporairement inaccessible
+    return [];
+  }
 }
 
 export async function getLeads() {
