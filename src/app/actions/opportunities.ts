@@ -34,35 +34,65 @@ import Parser from "rss-parser";
 // Action pour récupérer les derniers appels d'offres réels via BOAMP
 export async function getTenders() {
   const parser = new Parser();
-  const keywords = ["plomberie", "chauffage", "climatisation", "CVC"];
-  const allTenders: any[] = [];
+  // On utilise des termes plus larges pour être sûr d'avoir des résultats
+  const keywords = ["plomberie", "cvc", "chauffage", "sanitaire", "climatisation"];
+  let allTenders: any[] = [];
 
   try {
-    // On boucle sur quelques mots clés pour avoir un flux riche
     for (const keyword of keywords) {
-      const feed = await parser.parseURL(`https://www.boamp.fr/recherche/rss/avis?motscles=${keyword}`);
-      
-      feed.items.forEach(item => {
-        allTenders.push({
-          id: item.guid || Math.random().toString(),
-          title: item.title,
-          description: item.contentSnippet || item.content,
-          source: "BOAMP.fr (Officiel)",
-          link: item.link,
-          publishedAt: item.pubDate,
-          category: keyword.toUpperCase()
-        });
-      });
+      try {
+        const feed = await parser.parseURL(`https://www.boamp.fr/recherche/rss/avis?motscles=${keyword}`);
+        if (feed.items) {
+          feed.items.forEach(item => {
+            allTenders.push({
+              id: item.guid || Math.random().toString(),
+              title: item.title,
+              description: item.contentSnippet || "Consultez le détail sur le site officiel.",
+              source: "BOAMP Officiel",
+              link: item.link,
+              publishedAt: item.pubDate,
+              category: keyword.toUpperCase()
+            });
+          });
+        }
+      } catch (e) {
+        console.warn(`Could not fetch for keyword ${keyword}`);
+      }
     }
 
-    // On trie par date et on limite à 10 résultats uniques
+    // Suppression des doublons par ID
+    allTenders = Array.from(new Map(allTenders.map(t => [t.id, t])).values());
+
+    if (allTenders.length === 0) {
+      // Fallback si rien n'est trouvé aujourd'hui (pour ne pas avoir une page vide)
+      return [
+        {
+          id: "fb-1",
+          title: "Veille : Projets de Rénovation Vaucluse",
+          description: "Pensez à surveiller les permis de construire en mairie d'Entraigues et d'Avignon.",
+          source: "Conseil Stratégique",
+          link: "https://www.vaucluse.fr/",
+          publishedAt: new Date().toISOString(),
+          category: "CONSEIL"
+        },
+        {
+          id: "fb-2",
+          title: "Marchés Publics : Grand Avignon",
+          description: "Accédez à la plateforme de dématérialisation pour les petits marchés de maintenance.",
+          source: "Plateforme Locale",
+          link: "https://www.marches-publics.info/",
+          publishedAt: new Date().toISOString(),
+          category: "VEILLE"
+        }
+      ];
+    }
+
     return allTenders
       .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
       .slice(0, 12);
 
   } catch (error) {
     console.error("Failed to fetch real tenders:", error);
-    // Fallback sur des exemples si le flux est temporairement inaccessible
     return [];
   }
 }
