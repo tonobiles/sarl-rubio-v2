@@ -19,7 +19,6 @@ const nextConfig: NextConfig = {
       { source: '/mentions-legales/', destination: '/mentions-legales', permanent: true },
       // Support for URLs without trailing slash as well
       { source: '/actualites', destination: '/', permanent: true },
-      { source: '/plomberie', destination: '/plomberie', permanent: false }, // Avoid self-loop if trailing slash is handled by Next.js
     ]
   },
   images: {
