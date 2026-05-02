@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { Lock, LogIn, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { loginAdmin } from "@/app/actions/auth";
+
 export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,13 +18,12 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     setError("");
 
-    // simulation simple pour l'exemple
-    // On mettra en place une vraie vérification via API
-    if (password === "admin123") { // On changera ça par une variable d'env plus tard
-       document.cookie = "admin_session=true; path=/; max-age=86400";
+    const result = await loginAdmin(password);
+    
+    if (result.success) {
        router.push("/admin/dashboard");
     } else {
-       setError("Mot de passe incorrect");
+       setError(result.error || "Erreur de connexion");
     }
     setIsLoading(false);
   };
