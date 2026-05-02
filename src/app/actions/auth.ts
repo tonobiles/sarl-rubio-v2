@@ -3,7 +3,12 @@
 import { cookies } from "next/headers";
 
 export async function loginAdmin(password: string) {
-  const secretPassword = process.env.ADMIN_PASSWORD || "admin123";
+  const secretPassword = process.env.ADMIN_PASSWORD;
+
+  if (!secretPassword) {
+    console.error("ADMIN_PASSWORD environment variable is not set!");
+    return { success: false, error: "Configuration de sécurité manquante" };
+  }
 
   if (password === secretPassword) {
     const cookieStore = await cookies();
