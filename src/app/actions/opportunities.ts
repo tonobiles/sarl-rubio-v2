@@ -31,37 +31,29 @@ export async function saveLead(formData: FormData) {
 
 // Action pour récupérer les derniers appels d'offres (Simulation de flux RSS/API)
 export async function getTenders() {
-  // Dans une version réelle, on ferait un fetch sur une API de marchés publics (ex: BOAMP ou France Marchés)
-  // Ici on simule les résultats pour la démonstration du tableau de bord
-  return [
-    {
-      id: "1",
-      title: "Rénovation plomberie - École Primaire Entraigues",
-      description: "Remplacement complet du réseau ECS et pose de sanitaires suspendus.",
-      source: "Mairie d'Entraigues",
-      link: "https://www.marches-publics.info/",
-      publishedAt: new Date().toISOString(),
-      category: "Plomberie"
-    },
-    {
-      id: "2",
-      title: "Installation Climatisation - Bureaux Zone du Pontet",
-      description: "Installation d'un système VRV pour 600m2 de bureaux.",
-      source: "Conseil Départemental 84",
-      link: "https://www.boamp.fr/",
-      publishedAt: new Date().toISOString(),
-      category: "CVC"
-    },
-    {
-      id: "3",
-      title: "Entretien chaufferie gaz - Résidence Avignon",
-      description: "Contrat de maintenance annuelle pour 48 logements.",
-      source: "Grand Avignon Résidences",
-      link: "https://www.marches-publics.gouv.fr/",
-      publishedAt: new Date().toISOString(),
-      category: "Chauffage"
-    }
+  // Dans une version réelle, on ferait un fetch sur une API de marchés publics
+  // Ici on génère une liste plus longue avec des liens de recherche directs
+  const categories = ["Plomberie", "CVC", "Chauffage", "VMC"];
+  const sources = [
+    { name: "Mairie d'Entraigues", link: "https://francemarches.com/recherche/84" },
+    { name: "Conseil Départemental 84", link: "https://www.boamp.fr/recherche/resultat?motscles=plomberie" },
+    { name: "Grand Avignon", link: "https://www.marches-publics.info/recherche-avancee.htm" },
+    { name: "Bailleur Social Vaucluse", link: "https://www.marches-publics.gouv.fr/?page=entreprise.AccueilEntreprise" }
   ];
+
+  return Array.from({ length: 8 }).map((_, i) => {
+    const cat = categories[i % categories.length];
+    const src = sources[i % sources.length];
+    return {
+      id: `tender-${i}`,
+      title: `${cat} - Chantier ${["Rénovation", "Entretien", "Installation", "Urgence"][i % 4]} ${["EHPAD", "École", "Mairie", "Gymnase"][i % 4]}`,
+      description: `Appel d'offre public pour des travaux de ${cat.toLowerCase()} dans le cadre de la modernisation des infrastructures du Vaucluse.`,
+      source: src.name,
+      link: `${src.link}`,
+      publishedAt: new Date(Date.now() - i * 86400000).toISOString(),
+      category: cat
+    };
+  });
 }
 
 export async function getLeads() {
