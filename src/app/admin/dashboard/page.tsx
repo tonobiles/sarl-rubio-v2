@@ -9,7 +9,8 @@ import {
   LogOut, 
   Settings,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  TrendingUp
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -81,9 +82,9 @@ export default function AdminDashboard() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
+                { title: "Centre d'Opportunités", icon: TrendingUp, href: "/admin/dashboard/opportunities", color: "bg-emerald-500/10 text-emerald-500" },
                 { title: "Ajouter un Chantier", icon: Camera, href: "/admin/dashboard/realisations/new" },
                 { title: "Nouveau Partenaire", icon: Users, href: "/admin/dashboard/partners/new" },
-                { title: "Ajouter un Avis", icon: Star, href: "/admin/dashboard/testimonials/new" },
                 { title: "Profil & Sécurité", icon: Settings, href: "/admin/dashboard/settings" },
               ].map((item) => (
                 <Link
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
                   href={item.href}
                   className="p-6 rounded-[28px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${item.color || "bg-primary/10 text-primary"}`}>
                     <item.icon size={20} />
                   </div>
                   <h3 className="font-black text-slate-900 dark:text-white tracking-tight flex items-center justify-between">

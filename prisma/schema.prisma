@@ -36,3 +36,25 @@ model Testimonial {
   rating    Int      @default(5)
   date      DateTime @default(now())
 }
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  status    String   @default("NEU") // NEU, EN_COURS, GAGNE, PERDU
+  createdAt DateTime @default(now())
+}
+
+model Tender {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  source      String?
+  link        String?
+  publishedAt DateTime @default(now())
+  category    String?  // Plomberie, CVC, etc.
+}
+

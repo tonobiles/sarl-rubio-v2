@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 import { sendContactEmail } from "@/app/actions/contact";
+import { saveLead } from "@/app/actions/opportunities";
 import { Phone, Mail, MapPin, Clock, Send, ChevronRight, CheckCircle2 } from "lucide-react";
 
 export default function ContactPage() {
@@ -104,6 +105,7 @@ export default function ContactPage() {
                 <form 
                   action={async (formData) => {
                     setIsLoading(true);
+                    await saveLead(formData);
                     const result = await sendContactEmail(formData);
                     setIsLoading(false);
                     if (result.success) {
