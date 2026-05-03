@@ -50,9 +50,9 @@ export async function getTenders() {
     const response = await fetch(
       `https://www.boamp.fr/api/search/1.0/recherche?` + 
       new URLSearchParams({
-        `query`: `cpv:(${CPV_CODES.join(' OR ')}) AND depar:(${DEPTS.join(' OR ')})`,
-        `sort`: `dateparution:desc`,
-        `size`: `20`
+        query: `cpv:(${CPV_CODES.join(' OR ')}) AND depar:(${DEPTS.join(' OR ')})`,
+        sort: "dateparution:desc",
+        size: "20"
       })
     );
 
