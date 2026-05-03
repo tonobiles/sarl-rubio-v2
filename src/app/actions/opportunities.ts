@@ -42,23 +42,22 @@ export async function getTenders() {
   
   try {
     // Construction de la requête API BOAMP
-    // On cherche les avis parus depuis 7 jours pour avoir de la fraîcheur
-    const dateMin = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-    
-    // On construit une requête plus simple et plus robuste
-    const query = `(${CPV_CODES.join(' OR ')}) AND (${DEPTS.join(' OR ')})`;
+    // ✅ Version corrigée et chirurgicale
+    const cpvQuery  = `cpv:(${CPV_CODES.join(" OR ")})`;
+    const deptQuery = `lieu_execution.code:(${DEPTS.join(" OR ")})`;
+    const query     = `${cpvQuery} AND ${deptQuery}`;
     
     const response = await fetch(
-      `https://www.boamp.fr/api/search/1.0/recherche?` + 
+      "https://www.boamp.fr/api/search/1.0/recherche?" +
       new URLSearchParams({
         query: query,
-        sort: "dateparution:desc",
-        size: "24"
+        sort:  "dateparution:desc",
+        size:  "24"
       })
     );
 
     const data = await response.json();
-    console.log("BOAMP Data received:", data.nb_avis);
+    console.log("BOAMP Data received (items):", data.nb_avis);
 
     if (!data.item) return [];
 
