@@ -61,8 +61,8 @@ export async function getTenders() {
   const today = new Date().toISOString().split('T')[0];
 
   // Uniquement les appels d'offres en cours (pas les attributions)
-  // Et dont la date limite n'est pas dépassée
-  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND datelimitereponse >= "${today}"`;
+  // Et dont la date limite n'est pas dépassée OU n'est pas renseignée
+  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND (datelimitereponse >= "${today}" OR datelimitereponse is null)`;
 
   try {
     const response = await fetch(
