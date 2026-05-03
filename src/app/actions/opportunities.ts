@@ -57,12 +57,13 @@ export async function getTenders() {
     .map(d => `descripteur_libelle like "${d}"`)
     .join(" OR ");
 
-  // On récupère la date du jour au format ISO pour le filtre
+  // On récupère la date du jour et d'il y a 30 jours pour le filtre
   const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
 
   // Uniquement les appels d'offres en cours (pas les attributions)
-  // Parus après le 01/01/2024 pour éviter les archives
-  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND (datelimitereponse >= "${today}" OR datelimitereponse is null) AND dateparution >= "2024-01-01"`;
+  // Parus récemment (30 jours max) et non expirés
+  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND (datelimitereponse >= "${today}" OR datelimitereponse is null) AND dateparution >= "${thirtyDaysAgo}"`;
 
   try {
     const response = await fetch(
