@@ -82,7 +82,7 @@ export async function getTenders() {
       source: `BOAMP - ${item.descripteur_libelle || "Marché Public"}`,
       link: item.url_avis || `https://www.boamp.fr/pages/avis/?q=idweb:%22${item.idweb}%22`,
       publishedAt: item.dateparution,
-      category: item.descripteur_libelle || "BÂTIMENT",
+      category: String(item.descripteur_libelle || "BÂTIMENT"),
       deadline: item.datelimitereponse,
       location: `${item.code_departement_prestation} - Vaucluse/Sud`
     }));

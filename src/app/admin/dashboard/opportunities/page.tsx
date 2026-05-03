@@ -104,7 +104,7 @@ export default async function OpportunitiesPage() {
                     <div className="flex justify-between items-start mb-1">
                       <h3 className="font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight">{tender.title}</h3>
                       <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-1 rounded-md uppercase tracking-widest whitespace-nowrap ml-4">
-                        {tender.category ? tender.category.split(' ')[0] : 'CHANTIER'}
+                        {typeof tender.category === 'string' ? tender.category.split(' ')[0] : 'CHANTIER'}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mb-4">
