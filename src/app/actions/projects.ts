@@ -20,23 +20,25 @@ export async function createProject(formData: FormData) {
   const title = formData.get("title") as string;
   const category = formData.get("category") as string;
   const location = formData.get("location") as string;
-  const imageFile = formData.get("image") as File;
+  const imageFiles = formData.getAll("images") as File[];
 
   try {
-    let imageUrl = "";
+    const imageUrls: string[] = [];
 
-    if (imageFile && imageFile.size > 0) {
-      const blob = await put(imageFile.name, imageFile, {
-        access: 'public',
-      });
-      imageUrl = blob.url;
+    for (const file of imageFiles) {
+      if (file && file.size > 0) {
+        const blob = await put(file.name, file, {
+          access: 'public',
+        });
+        imageUrls.push(blob.url);
+      }
     }
 
     await prisma.project.create({
       data: {
         title,
         category,
-        image: imageUrl,
+        images: imageUrls,
         description: location,
       }
     });

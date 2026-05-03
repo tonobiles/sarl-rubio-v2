@@ -15,7 +15,7 @@ model Project {
   id          String   @id @default(cuid())
   title       String
   category    String   // VMC, Chauffage, Clim, Plomberie
-  image       String
+  images      String[]
   description String?
   createdAt   DateTime @default(now())
 }

@@ -10,7 +10,7 @@ interface Project {
   title: string;
   category: string;
   description: string | null;
-  image: string;
+  images: string[];
 }
 
 export default function RealisationsClient({ projects }: { projects: Project[] }) {
@@ -46,14 +46,20 @@ export default function RealisationsClient({ projects }: { projects: Project[] }
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="group relative rounded-[32px] overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none h-[400px]"
+                className="group relative rounded-[32px] overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none h-[400px] bg-slate-100 dark:bg-slate-900"
               >
-                <Image
-                  src={project.image}
-                  alt={project.title}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+                {project.images && project.images.length > 0 ? (
+                  <Image
+                    src={project.images[0]}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-slate-300">
+                     <Camera size={48} />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                 
                 <div className="absolute inset-0 p-8 flex flex-col justify-end">

@@ -99,13 +99,14 @@ export default function NewProjectPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Photo du chantier</label>
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Photos du chantier</label>
             <div className="relative">
               <div className="w-full flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] p-12 hover:border-primary/40 hover:bg-primary/5 transition-all group cursor-pointer relative overflow-hidden">
                 <input 
                   type="file" 
-                  name="image"
+                  name="images"
                   required
+                  multiple
                   accept="image/*"
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
                 />
@@ -113,8 +114,8 @@ export default function NewProjectPage() {
                   <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Upload size={32} />
                   </div>
-                  <p className="text-sm font-black text-slate-600 dark:text-slate-300">Cliquez pour choisir une photo</p>
-                  <p className="text-xs text-slate-400 font-medium mt-1">PNG, JPG jusqu'à 5MB</p>
+                  <p className="text-sm font-black text-slate-600 dark:text-slate-300">Cliquez pour choisir plusieurs photos</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">Sélection multiple autorisée</p>
                 </div>
               </div>
             </div>

@@ -19,7 +19,9 @@ import {
   Hammer,
   Star,
   Quote,
-  Award
+  Award,
+  Zap,
+  Network
 } from "lucide-react";
 
 const services = [
@@ -362,6 +364,44 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Cross-linking Section (SEO Maillage) */}
+      <section className="py-24 px-6 md:px-12 bg-slate-900 text-white overflow-hidden relative">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
+           <div className="flex-1">
+              <span className="text-primary font-black text-xs uppercase tracking-[0.3em] mb-4 block">Partenaire de Confiance</span>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-8 uppercase">
+                BESOIN D'UN EXPERT EN <br />
+                <span className="text-primary italic">ÉLECTRICITÉ GÉNÉRALE ?</span>
+              </h2>
+              <p className="text-slate-400 text-lg font-medium leading-relaxed mb-10">
+                Pour toutes vos installations électriques, mises aux normes et réseaux, nous vous recommandons <span className="text-white font-bold">EGELEC 84</span>. 
+                Basée à Entraigues, c'est l'entreprise de référence pour un travail soigné et réactif.
+              </p>
+              <a 
+                href="https://egelec84.fr" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 px-8 py-4 rounded-2xl text-white font-black uppercase tracking-widest transition-all group"
+              >
+                Visiter EGELEC 84
+                <ArrowRight size={20} className="text-primary group-hover:translate-x-2 transition-transform" />
+              </a>
+           </div>
+           <div className="flex-1 grid grid-cols-2 gap-4">
+              <div className="aspect-square bg-white/5 rounded-[40px] border border-white/10 flex flex-col items-center justify-center p-8 group hover:border-primary/40 transition-all">
+                 <Zap size={40} className="text-primary mb-4" />
+                 <p className="font-black uppercase tracking-tight text-center">Électricité Générale</p>
+              </div>
+              <div className="aspect-square bg-white/5 rounded-[40px] border border-white/10 flex flex-col items-center justify-center p-8 mt-12 group hover:border-primary/40 transition-all">
+                 <Network size={40} className="text-primary mb-4" />
+                 <p className="font-black uppercase tracking-tight text-center">Câblage Réseau</p>
+              </div>
+           </div>
+        </div>
+        {/* Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       </section>
 
       {/* Final CTA Section */}
