@@ -57,9 +57,9 @@ export default function AdminDashboard() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { title: "Ajouter un Chantier", icon: Camera, href: "/admin/dashboard/realisations/new" },
-              { title: "Nouveau Partenaire", icon: Users, href: "/admin/dashboard/partners/new" },
-              { title: "Profil & Sécurité", icon: Settings, href: "/admin/dashboard/settings" },
+              { title: "Ajouter un Chantier", icon: Camera, href: "/admin/dashboard/realisations/new", color: "bg-primary/10 text-primary" },
+              { title: "Nouveau Partenaire", icon: Users, href: "/admin/dashboard/partners/new", color: "bg-primary/10 text-primary" },
+              { title: "Profil & Sécurité", icon: Settings, href: "/admin/dashboard/settings", color: "bg-primary/10 text-primary" },
             ].map((item) => (
               <Link
                 key={item.title}
