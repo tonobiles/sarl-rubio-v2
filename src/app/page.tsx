@@ -105,7 +105,7 @@ export default function Home() {
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <a 
-                href="tel:0490833215" 
+                href="tel:0490882477" 
                 className="px-8 py-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-black text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-3 active:scale-95"
               >
                 <Phone size={20} className="text-primary" />
@@ -424,7 +424,7 @@ export default function Home() {
               Obtenir un devis gratuit
             </Link>
             <a 
-              href="tel:0490833215" 
+              href="tel:0490882477" 
               className="px-10 py-5 rounded-2xl bg-slate-900 text-white font-black text-lg shadow-xl hover:scale-105 transition-transform flex items-center gap-3"
             >
               <Phone size={20} />
