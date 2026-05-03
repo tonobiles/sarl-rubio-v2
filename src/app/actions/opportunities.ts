@@ -2,6 +2,9 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Action pour sauvegarder un nouveau prospect (Lead)
 export async function saveLead(formData: FormData) {
@@ -12,7 +15,8 @@ export async function saveLead(formData: FormData) {
   const subject = formData.get("subject") as string || "Demande de devis";
 
   try {
-    await prisma.lead.create({
+    // 1. Sauvegarde en Base de données
+    const lead = await prisma.lead.create({
       data: {
         name,
         email,
@@ -21,6 +25,30 @@ export async function saveLead(formData: FormData) {
         subject,
       }
     });
+
+    // 2. Envoi de l'email de notification
+    if (process.env.RESEND_API_KEY) {
+      await resend.emails.send({
+        from: 'SARL RUBIO <notifications@sarl-rubio.fr>',
+        to: ['contact@sarl-rubio.fr'],
+        subject: `🔔 Nouveau Lead : ${subject}`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #FF9500;">Nouvelle demande de contact</h2>
+            <p><strong>Nom :</strong> ${name}</p>
+            <p><strong>Email :</strong> ${email}</p>
+            <p><strong>Téléphone :</strong> ${phone}</p>
+            <p><strong>Sujet :</strong> ${subject}</p>
+            <hr />
+            <p><strong>Message :</strong></p>
+            <p style="white-space: pre-wrap;">${message}</p>
+            <br />
+            <a href="https://sarl-rubio-v2.vercel.app/admin/dashboard/opportunities" style="background: #FF9500; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Voir dans le Dashboard</a>
+          </div>
+        `
+      });
+    }
+
     revalidatePath("/admin/dashboard/opportunities");
     return { success: true };
   } catch (error) {
