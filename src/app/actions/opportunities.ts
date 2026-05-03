@@ -57,8 +57,12 @@ export async function getTenders() {
     .map(d => `descripteur_libelle like "${d}"`)
     .join(" OR ");
 
+  // On récupère la date du jour au format ISO pour le filtre
+  const today = new Date().toISOString().split('T')[0];
+
   // Uniquement les appels d'offres en cours (pas les attributions)
-  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE"`;
+  // Et dont la date limite n'est pas dépassée
+  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND datelimitereponse >= "${today}"`;
 
   try {
     const response = await fetch(
