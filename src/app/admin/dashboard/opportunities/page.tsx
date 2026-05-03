@@ -1,9 +1,21 @@
 import { Briefcase, MessageSquare, ExternalLink, Filter, TrendingUp, Clock, CheckCircle2, AlertCircle, MapPin, Calendar } from "lucide-react";
 import { getLeads, getTenders } from "@/app/actions/opportunities";
 
+interface Tender {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  link: string;
+  publishedAt: string;
+  category: string;
+  deadline?: string;
+  location: string;
+}
+
 export default async function OpportunitiesPage() {
   const leads = await getLeads();
-  const tenders = await getTenders();
+  const tenders: Tender[] = await getTenders();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -82,7 +94,7 @@ export default async function OpportunitiesPage() {
           </div>
 
           <div className="space-y-4">
-            {tenders.map((tender) => (
+            {tenders.map((tender: Tender) => (
               <div key={tender.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-[32px] p-6 border-2 border-transparent hover:border-primary/20 transition-all group">
                 <div className="flex gap-4">
                   <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm text-primary group-hover:scale-110 transition-transform flex-shrink-0">
