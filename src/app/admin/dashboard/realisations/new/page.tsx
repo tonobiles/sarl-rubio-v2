@@ -10,6 +10,7 @@ import { createProject } from "@/app/actions/projects";
 export default function NewProjectPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [selectedCount, setSelectedCount] = useState(0);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -108,14 +109,19 @@ export default function NewProjectPage() {
                   required
                   multiple
                   accept="image/*"
+                  onChange={(e) => setSelectedCount(e.target.files?.length || 0)}
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
                 />
                 <div className="text-center group-hover:scale-110 transition-transform">
                   <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Upload size={32} />
                   </div>
-                  <p className="text-sm font-black text-slate-600 dark:text-slate-300">Cliquez pour choisir plusieurs photos</p>
-                  <p className="text-xs text-slate-400 font-medium mt-1">Sélection multiple autorisée</p>
+                  <p className="text-sm font-black text-slate-600 dark:text-slate-300">
+                    {selectedCount > 0 ? `${selectedCount} photos sélectionnées` : "Cliquez pour choisir plusieurs photos"}
+                  </p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">
+                    {selectedCount > 0 ? "Cliquez pour modifier la sélection" : "Sélection multiple autorisée"}
+                  </p>
                 </div>
               </div>
             </div>
