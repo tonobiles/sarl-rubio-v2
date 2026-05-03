@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Camera, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -11,6 +12,97 @@ interface Project {
   category: string;
   description: string | null;
   images: string[];
+}
+
+function ProjectCard({ project }: { project: Project }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (project.images && project.images.length > 0) {
+      setCurrentIndex((prev) => (prev + 1) % project.images.length);
+    }
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (project.images && project.images.length > 0) {
+      setCurrentIndex((prev) => (prev - 1 + project.images.length) % project.images.length);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      className="group relative rounded-[32px] overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none h-[400px] bg-slate-100 dark:bg-slate-900"
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="absolute inset-0"
+        >
+          {project.images && project.images.length > 0 ? (
+            <Image
+              src={project.images[currentIndex]}
+              alt={project.title}
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-300">
+               <Camera size={48} />
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+      
+      {project.images && project.images.length > 1 && (
+        <>
+          <button 
+            onClick={prevImage}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/50 border border-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary"
+          >
+            <ChevronRight size={16} className="rotate-180" />
+          </button>
+          <button 
+            onClick={nextImage}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-900/50 border border-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {project.images.map((_: any, idx: number) => (
+              <div 
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? "bg-primary w-4" : "bg-white/40"}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="absolute inset-0 p-8 flex flex-col justify-end">
+        <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-3 w-fit">
+          {project.category}
+        </span>
+        <h3 className="text-2xl font-black text-white mb-1">{project.title}</h3>
+        <p className="text-slate-300 text-sm font-bold flex items-center gap-2">
+          <Camera size={14} className="text-primary" />
+          {project.description || "Vaucluse"}
+        </p>
+      </div>
+    </motion.div>
+  );
 }
 
 export default function RealisationsClient({ projects }: { projects: Project[] }) {
@@ -40,39 +132,7 @@ export default function RealisationsClient({ projects }: { projects: Project[] }
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project, i) => (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative rounded-[32px] overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none h-[400px] bg-slate-100 dark:bg-slate-900"
-              >
-                {project.images && project.images.length > 0 ? (
-                  <Image
-                    src={project.images[0]}
-                    alt={project.title}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-slate-300">
-                     <Camera size={48} />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                
-                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  <span className="inline-block px-3 py-1 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-3 w-fit">
-                    {project.category}
-                  </span>
-                  <h3 className="text-2xl font-black text-white mb-1">{project.title}</h3>
-                  <p className="text-slate-300 text-sm font-bold flex items-center gap-2">
-                    <Camera size={14} className="text-primary" />
-                    {project.description || "Vaucluse"}
-                  </p>
-                </div>
-              </motion.div>
+              <ProjectCard project={project} key={project.id} />
             ))}
           </div>
         </div>
