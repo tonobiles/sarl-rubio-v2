@@ -109,18 +109,19 @@ export default function NewProjectPage() {
                   required
                   multiple
                   accept="image/*"
+                  capture="environment"
                   onChange={(e) => setSelectedCount(e.target.files?.length || 0)}
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
                 />
                 <div className="text-center group-hover:scale-110 transition-transform">
                   <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Upload size={32} />
+                    <Camera size={32} />
                   </div>
                   <p className="text-sm font-black text-slate-600 dark:text-slate-300">
-                    {selectedCount > 0 ? `${selectedCount} photos sélectionnées` : "Cliquez pour choisir plusieurs photos"}
+                    {selectedCount > 0 ? `${selectedCount} photos prêtes` : "Prendre ou choisir des photos"}
                   </p>
                   <p className="text-xs text-slate-400 font-medium mt-1">
-                    {selectedCount > 0 ? "Cliquez pour modifier la sélection" : "Sélection multiple autorisée"}
+                    {selectedCount > 0 ? "Cliquez pour modifier" : "Appareil photo ou Galerie"}
                   </p>
                 </div>
               </div>
