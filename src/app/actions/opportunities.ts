@@ -31,70 +31,49 @@ export async function saveLead(formData: FormData) {
 
 import Parser from "rss-parser";
 
-// Action pour la veille chirurgicale BOAMP via API DILA (OpenDataSoft)
+// Action pour la veille chirurgicale BOAMP (Version LIVE Officielle)
 export async function getTenders() {
+  const CPV_CODES = [
+    "45331000", "45331100", "45332000", // Plomberie/CVC
+    "39717200", "45331220",             // Clim
+    "45310000"                          // Elec
+  ];
   const DEPTS = ["84", "13", "30", "34"];
-  const MOTS_OBJET = [
-    "climatisation", "chauffage", "plomberie",
-    "CVC", "ventilation", "électricité", "thermique"
-  ];
-  const DESCRIPTEURS = [
-    "Chauffage", "Climatisation", "Plomberie",
-    "Electricité", "Ventilation", "CVC"
-  ];
-
-  // Filtre département sur code_departement_prestation
-  const deptFilter = DEPTS
-    .map(d => `code_departement_prestation = "${d}"`)
-    .join(" OR ");
-
-  // Filtre métier : objet OU descripteur_libelle
-  const objetFilter = MOTS_OBJET
-    .map(m => `objet like "${m}"`)
-    .join(" OR ");
-
-  const descFilter = DESCRIPTEURS
-    .map(d => `descripteur_libelle like "${d}"`)
-    .join(" OR ");
-
-  // On récupère la date du jour et d'il y a 30 jours pour le filtre
-  const today = new Date().toISOString().split('T')[0];
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-
-  // Uniquement les appels d'offres en cours (pas les attributions)
-  // Parus récemment (30 jours max) et non expirés
-  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND (datelimitereponse >= "${today}" OR datelimitereponse is null) AND dateparution >= "${thirtyDaysAgo}"`;
-
+  
   try {
+    // ✅ Utilisation des filtres chirurgicaux sur l'API LIVE
+    const cpvQuery  = `cpv:(${CPV_CODES.join(" OR ")})`;
+    const deptQuery = `lieu_execution.code:(${DEPTS.join(" OR ")})`;
+    const query     = `${cpvQuery} AND ${deptQuery}`;
+    
     const response = await fetch(
-      "https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records?" +
+      "https://www.boamp.fr/api/search/1.0/recherche?" +
       new URLSearchParams({
-        where:    where,
-        order_by: "dateparution DESC",
-        limit:    "24",
-        select:   "idweb,objet,nomacheteur,dateparution,datelimitereponse,code_departement_prestation,descripteur_libelle,url_avis"
+        query: query,
+        sort:  "dateparution:desc",
+        size:  "24"
       }),
-      { next: { revalidate: 0 } } // Force le rafraîchissement (pas de cache)
+      { next: { revalidate: 3600 } } // Refresh toutes les heures
     );
 
     const data = await response.json();
 
-    if (!data.results) return [];
+    if (!data.item) return [];
 
-    return data.results.map((item: any) => ({
+    return data.item.map((item: any) => ({
       id: item.idweb,
       title: item.objet,
-      description: item.nomacheteur || "Consultez le détail sur le site officiel.",
-      source: `BOAMP - ${item.descripteur_libelle || "Marché Public"}`,
-      link: item.url_avis || `https://www.boamp.fr/pages/avis/?q=idweb:%22${item.idweb}%22`,
+      description: item.resume_avis || "Consultez le détail sur le site officiel.",
+      source: `BOAMP - ${item.type_avis.libelle}`,
+      link: `https://www.boamp.fr/pages/avis/?q=idweb:%22${item.idweb}%22`,
       publishedAt: item.dateparution,
-      category: String(item.descripteur_libelle || "BÂTIMENT"),
+      category: item.cpv[0]?.libelle || "BÂTIMENT",
       deadline: item.datelimitereponse,
-      location: `${item.code_departement_prestation} - Vaucluse/Sud`
+      location: item.departement[0]?.libelle || "Vaucluse/Sud"
     }));
 
   } catch (error) {
-    console.error("DILA API Error:", error);
+    console.error("BOAMP API Error:", error);
     return [];
   }
 }
