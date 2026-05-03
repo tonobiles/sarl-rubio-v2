@@ -1,4 +1,4 @@
-import { Briefcase, MessageSquare, ExternalLink, Filter, TrendingUp, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Briefcase, MessageSquare, ExternalLink, Filter, TrendingUp, Clock, CheckCircle2, AlertCircle, MapPin, Calendar } from "lucide-react";
 import { getLeads, getTenders } from "@/app/actions/opportunities";
 
 export default async function OpportunitiesPage() {
@@ -90,24 +90,33 @@ export default async function OpportunitiesPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">{tender.title}</h3>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tender.category}</span>
+                      <h3 className="font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight">{tender.title}</h3>
+                      <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-1 rounded-md uppercase tracking-widest whitespace-nowrap ml-4">
+                        {tender.category.split(' ')[0]}
+                      </span>
                     </div>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{tender.source}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 line-clamp-2">
+                    <div className="flex items-center gap-3 mb-4">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                        <MapPin size={12} /> {tender.location}
+                      </p>
+                      <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded">
+                        <Calendar size={12} /> Limite : {tender.deadline ? new Date(tender.deadline).toLocaleDateString('fr-FR') : 'N/C'}
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 line-clamp-2 italic">
                       {tender.description}
                     </p>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                        <Clock size={12} /> Posté aujourd'hui
+                        <Clock size={12} /> Publié le {new Date(tender.publishedAt).toLocaleDateString('fr-FR')}
                       </span>
                       <a 
                         href={tender.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                        className="bg-primary text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2"
                       >
-                        Voir l'annonce <ExternalLink size={12} />
+                        Détails BOAMP <ExternalLink size={12} />
                       </a>
                     </div>
                   </div>

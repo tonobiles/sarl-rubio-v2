@@ -31,68 +31,49 @@ export async function saveLead(formData: FormData) {
 
 import Parser from "rss-parser";
 
-// Action pour récupérer les derniers appels d'offres réels via BOAMP
+// Action pour la veille chirurgicale BOAMP (Codes CPV & Départements)
 export async function getTenders() {
-  const parser = new Parser();
-  // On utilise des termes plus larges pour être sûr d'avoir des résultats
-  const keywords = ["plomberie", "cvc", "chauffage", "sanitaire", "climatisation"];
-  let allTenders: any[] = [];
-
+  const CPV_CODES = [
+    "45331000", "45331100", "45332000", // Plomberie/CVC
+    "39717200", "45331220",             // Clim
+    "45310000"                          // Elec
+  ];
+  const DEPTS = ["84", "13", "30", "34"];
+  
   try {
-    for (const keyword of keywords) {
-      try {
-        const feed = await parser.parseURL(`https://www.boamp.fr/recherche/rss/avis?motscles=${keyword}`);
-        if (feed.items) {
-          feed.items.forEach(item => {
-            allTenders.push({
-              id: item.guid || Math.random().toString(),
-              title: item.title,
-              description: item.contentSnippet || "Consultez le détail sur le site officiel.",
-              source: "BOAMP Officiel",
-              link: item.link,
-              publishedAt: item.pubDate,
-              category: keyword.toUpperCase()
-            });
-          });
-        }
-      } catch (e) {
-        console.warn(`Could not fetch for keyword ${keyword}`);
-      }
-    }
+    // Construction de la requête API BOAMP
+    // On cherche les avis parus depuis 7 jours pour avoir de la fraîcheur
+    const dateMin = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+    
+    // On construit une requête complexe pour l'API
+    // Note: L'API BOAMP accepte des paramètres de recherche avancés
+    const response = await fetch(
+      `https://www.boamp.fr/api/search/1.0/recherche?` + 
+      new URLSearchParams({
+        `query`: `cpv:(${CPV_CODES.join(' OR ')}) AND depar:(${DEPTS.join(' OR ')})`,
+        `sort`: `dateparution:desc`,
+        `size`: `20`
+      })
+    );
 
-    // Suppression des doublons par ID
-    allTenders = Array.from(new Map(allTenders.map(t => [t.id, t])).values());
+    const data = await response.json();
 
-    if (allTenders.length === 0) {
-      // Fallback si rien n'est trouvé aujourd'hui (pour ne pas avoir une page vide)
-      return [
-        {
-          id: "fb-1",
-          title: "Veille : Projets de Rénovation Vaucluse",
-          description: "Pensez à surveiller les permis de construire en mairie d'Entraigues et d'Avignon.",
-          source: "Conseil Stratégique",
-          link: "https://www.vaucluse.fr/",
-          publishedAt: new Date().toISOString(),
-          category: "CONSEIL"
-        },
-        {
-          id: "fb-2",
-          title: "Marchés Publics : Grand Avignon",
-          description: "Accédez à la plateforme de dématérialisation pour les petits marchés de maintenance.",
-          source: "Plateforme Locale",
-          link: "https://www.marches-publics.info/",
-          publishedAt: new Date().toISOString(),
-          category: "VEILLE"
-        }
-      ];
-    }
+    if (!data.item) return [];
 
-    return allTenders
-      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 12);
+    return data.item.map((item: any) => ({
+      id: item.idweb,
+      title: item.objet,
+      description: item.resume_avis || "Consultez le détail sur le site officiel.",
+      source: `BOAMP - ${item.type_avis.libelle}`,
+      link: `https://www.boamp.fr/pages/avis/?q=idweb:%22${item.idweb}%22`,
+      publishedAt: item.dateparution,
+      category: item.cpv[0]?.libelle || "CHANTIER",
+      deadline: item.datelimitereponse,
+      location: item.departement[0]?.libelle || "Vaucluse"
+    }));
 
   } catch (error) {
-    console.error("Failed to fetch real tenders:", error);
+    console.error("BOAMP API Error:", error);
     return [];
   }
 }
