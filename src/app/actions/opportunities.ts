@@ -61,8 +61,8 @@ export async function getTenders() {
   const today = new Date().toISOString().split('T')[0];
 
   // Uniquement les appels d'offres en cours (pas les attributions)
-  // Et dont la date limite n'est pas dépassée OU n'est pas renseignée
-  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND (datelimitereponse >= "${today}" OR datelimitereponse is null)`;
+  // Parus après le 01/01/2024 pour éviter les archives
+  const where = `(${deptFilter}) AND (${objetFilter} OR ${descFilter}) AND nature = "APPEL_OFFRE" AND (datelimitereponse >= "${today}" OR datelimitereponse is null) AND dateparution >= "2024-01-01"`;
 
   try {
     const response = await fetch(
@@ -72,7 +72,8 @@ export async function getTenders() {
         order_by: "dateparution DESC",
         limit:    "24",
         select:   "idweb,objet,nomacheteur,dateparution,datelimitereponse,code_departement_prestation,descripteur_libelle,url_avis"
-      })
+      }),
+      { next: { revalidate: 0 } } // Force le rafraîchissement (pas de cache)
     );
 
     const data = await response.json();
