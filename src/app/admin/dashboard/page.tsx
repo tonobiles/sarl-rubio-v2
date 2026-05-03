@@ -19,7 +19,6 @@ export default function AdminDashboard() {
   const stats = [
     { label: "Réalisations", count: 12, icon: Camera, color: "text-blue-500" },
     { label: "Partenaires", count: 6, icon: Users, color: "text-purple-500" },
-    { label: "Demandes Prospects", count: 0, icon: TrendingUp, color: "text-emerald-500" },
   ];
 
   return (
@@ -33,7 +32,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {stats.map((stat) => (
           <motion.div
             key={stat.label}
@@ -58,7 +57,6 @@ export default function AdminDashboard() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { title: "Centre d'Opportunités", icon: TrendingUp, href: "/admin/dashboard/opportunities", color: "bg-emerald-500/10 text-emerald-500" },
               { title: "Ajouter un Chantier", icon: Camera, href: "/admin/dashboard/realisations/new" },
               { title: "Nouveau Partenaire", icon: Users, href: "/admin/dashboard/partners/new" },
               { title: "Profil & Sécurité", icon: Settings, href: "/admin/dashboard/settings" },
