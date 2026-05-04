@@ -66,7 +66,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/hero.png"
-            alt="SARL RUBIO Installation moderne"
+            alt="Plombier Chauffagiste Entraigues-sur-la-Sorgue - SARL RUBIO"
             fill
             className="object-cover scale-105"
             priority

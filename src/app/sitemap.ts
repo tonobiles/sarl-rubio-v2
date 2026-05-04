@@ -1,8 +1,8 @@
-import { MetadataRoute } from 'next'
+import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://sarl-rubio.fr'
-  
+  const baseUrl = 'https://sarl-rubio.fr';
+
   const routes = [
     '',
     '/plomberie',
@@ -16,9 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
+    changeFrequency: 'weekly' as const,
     priority: route === '' ? 1 : 0.8,
-  }))
+  }));
 
-  return routes
+  return routes;
 }

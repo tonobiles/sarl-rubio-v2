@@ -39,6 +39,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  alternates: {
+    canonical: "https://sarl-rubio.fr",
+  }
 };
 
 export default function RootLayout({
