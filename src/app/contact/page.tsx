@@ -59,7 +59,7 @@ export default function ContactPage() {
                     </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Adresse Siège</p>
                     <p className="text-lg font-black text-slate-900 dark:text-white">
-                      125 Allée des Terres Blanches <br />
+                      1593 Rte d'Avignon <br />
                       84320 Entraigues-sur-la-Sorgue
                     </p>
                   </div>

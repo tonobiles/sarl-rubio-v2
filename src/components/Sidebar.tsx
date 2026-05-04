@@ -133,7 +133,7 @@ export default function Sidebar() {
 
             <div className="mt-auto pt-8 border-t border-slate-100 dark:border-slate-800">
               <a 
-                href="tel:0490833215" 
+                href="tel:0490882477" 
                 className="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 text-white font-bold text-center justify-center transition-transform active:scale-95"
               >
                 <Phone size={18} className="text-primary" />
@@ -195,7 +195,7 @@ export default function Sidebar() {
           <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Besoin d'aide ?</p>
             <a 
-              href="tel:0490833215" 
+              href="tel:0490882477" 
               className="flex items-center gap-3 text-slate-900 dark:text-white font-black text-lg hover:text-primary transition-colors"
             >
               <Phone size={20} className="text-primary" />

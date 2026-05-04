@@ -10,7 +10,7 @@ export default function MentionsLegales() {
       title: "1. Présentation du site",
       content: `En vertu de l'article 6 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique, il est précisé aux utilisateurs du site sarl-rubio.fr l'identité des différents intervenants dans le cadre de sa réalisation et de son suivi :`,
       details: [
-        "Propriétaire : SARL Rubio – 1593 Route d'Avignon, 84320 Entraigues sur la Sorgue",
+        "Propriétaire : SARL Rubio – 1593 Rte d'Avignon, 84320 Entraigues-sur-la-Sorgue",
         "Responsable publication : Sylvain DI VITO",
         "Hébergeur : O2SWITCH – Chemin des Pardiaux, 63000 Clermont-Ferrand",
         "Crédits : SARL Rubio"

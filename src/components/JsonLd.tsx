@@ -9,7 +9,7 @@ export default function JsonLd() {
     "telephone": "+33490882477",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "1593 Route d'Avignon",
+      "streetAddress": "1593 Rte d'Avignon",
       "addressLocality": "Entraigues-sur-la-Sorgue",
       "postalCode": "84320",
       "addressRegion": "Vaucluse",
