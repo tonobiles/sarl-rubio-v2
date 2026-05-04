@@ -16,21 +16,24 @@ export async function GET(request: Request) {
   const page = searchParams.get('page') || '1';
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
-  // Construction du filtre WHERE
-  const cpvWhere = CPV_FILTERS.map(c => `cpv like "${c}%"`).join(' OR ');
-  const deptWhere = DEPT_FILTERS.map(d => `departement="${d}"`).join(' OR ');
-  const where = `(${cpvWhere}) AND (${deptWhere})`;
+  // Filtres géographiques (Vaucluse + limitrophes)
+  const depts = "('84','13','30','26','05')";
+  const keywords = "('plomberie','chauffage','climatisation','pompe à chaleur','sanitaire','vmc')";
+  
+  // On utilise une recherche plein texte croisée avec le département
+  const where = `code_departement in ${depts}`;
+  const searchKeywords = 'plomberie OR chauffage OR climatisation OR "pompe à chaleur" OR sanitaire OR vmc';
 
-  const url = new URL('https://www.boamp.fr/api/explore/v2.1/catalog/datasets/boamp/records');
+  const url = new URL('https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records');
   url.searchParams.set('where', where);
+  url.searchParams.set('search', searchKeywords);
   url.searchParams.set('limit', limit);
-  url.searchParams.set('offset', offset.toString());
   url.searchParams.set('order_by', 'dateparution DESC');
-  url.searchParams.set('select', 'id,objet,acheteur,datelimitereponse,dateparution,cpv,urlboamp,montant,procedures,departement');
+  
+  console.log('Fetching BOAMP Final Version...');
 
   try {
     const response = await fetch(url.toString(), {
-      next: { revalidate: 3600 }, // Cache d'une heure
       headers: { 'Accept': 'application/json' }
     });
 
@@ -40,18 +43,18 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 
-    // Normalisation des données
+    // Normalisation des données avec mapping profond
     const records = (data.results || []).map((r: any) => ({
       id: r.id,
       source: 'BOAMP',
       objet: r.objet || 'Sans objet',
-      acheteur: r.acheteur?.nom || r.acheteur || 'N/C',
-      departement: r.departement || 'N/C',
+      acheteur: r.acheteur?.nom || r.nom_acheteur || r.acheteur || 'Acheteur Public',
+      departement: r.code_departement || r.departement || '84',
       datePublication: r.dateparution,
       dateLimite: r.datelimitereponse,
-      cpv: r.cpv,
+      cpv: r.cpv || (r.donnees?.cpv?.[0]?.code) || null,
       montant: r.montant || null,
-      procedure: r.procedures || null,
+      procedure: r.type_procedure || r.procedures || null,
       url: r.urlboamp || `https://www.boamp.fr/avis/detail/${r.id}`,
     }));
 
