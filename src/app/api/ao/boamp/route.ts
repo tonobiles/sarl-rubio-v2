@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 
     // Normalisation des données avec mapping profond
     const records = (data.results || []).map((r: any) => ({
-      id: r.id,
+      id: r.idweb || r.id,
       source: 'BOAMP',
       objet: r.objet || 'Sans objet',
       acheteur: r.acheteur?.nom || r.nom_acheteur || r.acheteur || 'Acheteur Public',
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       cpv: r.cpv || (r.donnees?.cpv?.[0]?.code) || null,
       montant: r.montant || null,
       procedure: r.type_procedure || r.procedures || null,
-      url: r.urlboamp || `https://www.boamp.fr/avis/detail/${r.id}`,
+      url: r.urlboamp || `https://www.boamp.fr/avis/detail/${r.idweb || r.id}`,
     }));
 
     return NextResponse.json({
