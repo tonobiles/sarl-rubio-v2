@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
@@ -8,14 +8,17 @@ import {
   ExternalLink, 
   ChevronDown, 
   ChevronUp, 
-  Filter, 
   Clock, 
   MapPin, 
   Building2, 
   Euro,
   AlertTriangle,
   Zap,
-  Globe
+  Globe,
+  Star,
+  Archive,
+  Inbox,
+  Filter
 } from 'lucide-react';
 
 // Mapping CPV → label + couleur
@@ -45,28 +48,59 @@ export default function AppelsOffresPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [search, setSearch] = useState('');
-  const [filterSource, setFilterSource] = useState('all');
+  const [activeTab, setActiveTab] = useState<'new' | 'selection' | 'archive'>('new');
   const [sortBy, setSortBy] = useState('datePublication');
   const [sortDir, setSortDir] = useState('desc');
+  
+  // États de persistance locale
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+
+  // Chargement de la persistance au démarrage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedFavs = localStorage.getItem('ao_favorites');
+    const savedHidden = localStorage.getItem('ao_hidden');
+    const savedRetention = localStorage.getItem('ao_retention_date');
+    
+    if (savedFavs) setFavorites(JSON.parse(savedFavs));
+    if (savedHidden) setHiddenIds(JSON.parse(savedHidden));
+    
+    // Logique de rétention de 90 jours
+    const now = new Date();
+    if (savedRetention) {
+      const lastCleanup = new Date(savedRetention);
+      const diffDays = (now.getTime() - lastCleanup.getTime()) / (1000 * 3600 * 24);
+      if (diffDays > 90) {
+        localStorage.removeItem('ao_favorites');
+        localStorage.removeItem('ao_hidden');
+        setFavorites([]);
+        setHiddenIds([]);
+        localStorage.setItem('ao_retention_date', now.toISOString());
+      }
+    } else {
+      localStorage.setItem('ao_retention_date', now.toISOString());
+    }
+  }, []);
+
+  // Sauvegarde auto des favoris
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('ao_favorites', JSON.stringify(favorites));
+    localStorage.setItem('ao_hidden', JSON.stringify(hiddenIds));
+  }, [favorites, hiddenIds]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [boampRes, tedRes] = await Promise.allSettled([
-        fetch('/api/ao/boamp?limit=40').then(r => r.json()),
-        fetch('/api/ao/ted?limit=20').then(r => r.json()),
-      ]);
-
-      const boampData = boampRes.status === 'fulfilled' ? boampRes.value.records || [] : [];
-      const tedData = tedRes.status === 'fulfilled' ? tedRes.value.records || [] : [];
-
-      // Fusion et dédoublonnage (par ID si possible)
-      const combined = [...boampData, ...tedData];
-      setRecords(combined);
+      const res = await fetch('/api/ao/boamp?limit=60');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setRecords(data.records || []);
       setLastUpdate(new Date());
     } catch (e) {
-      setError("Une erreur est survenue lors de la synchronisation avec les plateformes BOAMP et TED.");
+      setError("Erreur de synchronisation avec le flux BOAMP.");
     } finally {
       setLoading(false);
     }
@@ -76,24 +110,48 @@ export default function AppelsOffresPage() {
     fetchAll();
   }, [fetchAll]);
 
-  const filtered = records
-    .filter(r => {
-      if (filterSource !== 'all' && r.source !== filterSource) return false;
-      if (search) {
+  // Actions
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const moveToArchive = (id: string) => {
+    setHiddenIds(prev => [...prev, id]);
+    setFavorites(prev => prev.filter(i => i !== id));
+  };
+
+  const restoreFromArchive = (id: string) => {
+    setHiddenIds(prev => prev.filter(i => i !== id));
+  };
+
+  // Filtrage intelligent par onglet
+  const filtered = useMemo(() => {
+    return records
+      .filter(r => {
+        const isFav = favorites.includes(r.id);
+        const isHidden = hiddenIds.includes(r.id);
+        const daysUntil = getDaysUntil(r.dateLimite);
+        const isExpired = daysUntil !== null && daysUntil < 0;
+
+        if (activeTab === 'selection') return isFav && !isExpired;
+        if (activeTab === 'archive') return isHidden || isExpired;
+        return !isFav && !isHidden && !isExpired;
+      })
+      .filter(r => {
+        if (!search) return true;
         const q = search.toLowerCase();
         return r.objet?.toLowerCase().includes(q) || r.acheteur?.toLowerCase().includes(q);
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      let va = a[sortBy] || '';
-      let vb = b[sortBy] || '';
-      if (sortBy === 'dateLimite' || sortBy === 'datePublication') {
-        va = new Date(va || 0).getTime();
-        vb = new Date(vb || 0).getTime();
-      }
-      return sortDir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
-    });
+      })
+      .sort((a, b) => {
+        let va = a[sortBy] || '';
+        let vb = b[sortBy] || '';
+        if (sortBy === 'dateLimite' || sortBy === 'datePublication') {
+          va = new Date(va || 0).getTime();
+          vb = new Date(vb || 0).getTime();
+        }
+        return sortDir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+      });
+  }, [records, favorites, hiddenIds, activeTab, search, sortBy, sortDir]);
 
   const toggleSort = (col: string) => {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -102,148 +160,113 @@ export default function AppelsOffresPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
-            APPELS <span className="text-primary italic">D'OFFRES</span>
-          </h1>
-          <p className="text-slate-500 font-medium mt-1">Veille stratégique BOAMP & TED Europa</p>
-          {lastUpdate && (
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">
-              Dernière mise à jour : {lastUpdate.toLocaleTimeString('fr-FR')}
+      {/* Header Premium */}
+      <div className="relative overflow-hidden p-8 md:p-12 rounded-[48px] bg-slate-900 text-white shadow-2xl shadow-slate-900/20">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                Veille Stratégique
+              </div>
+              {lastUpdate && (
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  Màj: {lastUpdate.toLocaleTimeString('fr-FR')}
+                </div>
+              )}
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none">
+              RADAR <span className="text-primary italic">AO</span>
+            </h1>
+            <p className="text-slate-400 text-lg font-medium max-w-xl">
+              Détection intelligente des marchés en Plomberie, Chauffage & Électricité.
             </p>
-          )}
-        </div>
-        
-        <button
-          onClick={fetchAll}
-          disabled={loading}
-          className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 font-black text-xs uppercase tracking-widest hover:border-primary/40 transition-all shadow-sm active:scale-95 disabled:opacity-50"
-        >
-          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-          {loading ? "Synchronisation..." : "Rafraîchir"}
-        </button>
-      </div>
-
-      {/* Stats Quick Look */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-6 rounded-[32px] bg-blue-500/5 border border-blue-500/10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <Globe size={24} />
           </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">{records.length}</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AO Détectés</p>
-          </div>
-        </div>
-        <div className="p-6 rounded-[32px] bg-primary/5 border border-primary/10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
-            <Clock size={24} />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
-              {records.filter(r => getDaysUntil(r.dateLimite) !== null && (getDaysUntil(r.dateLimite) ?? 0) <= 7).length}
-            </p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Urgences (&lt; 7j)</p>
-          </div>
-        </div>
-        <div className="p-6 rounded-[32px] bg-green-500/5 border border-green-500/10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
-            <Zap size={24} />
-          </div>
-          <div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
-              {records.filter(r => r.source === 'BOAMP').length}
-            </p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">BOAMP (France)</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters & Search */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Rechercher un marché, un acheteur..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-primary/20 outline-none font-medium transition-all"
-          />
-        </div>
-        <div className="flex gap-4 w-full md:w-auto">
-          <select
-            value={filterSource}
-            onChange={(e) => setFilterSource(e.target.value)}
-            className="flex-1 md:w-48 px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none font-bold text-xs uppercase tracking-widest appearance-none outline-none focus:ring-2 focus:ring-primary/20"
+          
+          <button
+            onClick={fetchAll}
+            disabled={loading}
+            className="group relative flex items-center gap-4 px-8 py-5 rounded-3xl bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95 disabled:opacity-50 overflow-hidden"
           >
-            <option value="all">Toutes Sources</option>
-            <option value="BOAMP">BOAMP</option>
-            <option value="TED">TED Europa</option>
-          </select>
+            <RefreshCw size={18} className={loading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
+            {loading ? "Synchro..." : "Actualiser"}
+          </button>
         </div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -ml-32 -mb-32" />
       </div>
 
-      {/* Error Message */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold flex items-center gap-3"
+      {/* Tabs Navigation */}
+      <div className="flex flex-wrap items-center gap-2 p-2 bg-slate-100 dark:bg-slate-900/50 rounded-[32px] w-fit">
+        {[
+          { id: 'new', label: 'Nouveaux', icon: Inbox, count: records.filter(r => !favorites.includes(r.id) && !hiddenIds.includes(r.id) && (getDaysUntil(r.dateLimite) ?? 0) >= 0).length },
+          { id: 'selection', label: 'Ma Sélection', icon: Star, count: favorites.length },
+          { id: 'archive', label: 'Archives', icon: Archive, count: hiddenIds.length },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${
+              activeTab === tab.id 
+                ? "bg-white dark:bg-slate-800 text-primary shadow-sm" 
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
           >
-            <AlertTriangle size={18} />
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <tab.icon size={16} />
+            {tab.label}
+            <span className={`px-2 py-0.5 rounded-md text-[9px] ${activeTab === tab.id ? "bg-primary text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}`}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm">
+      {/* Search Bar */}
+      <div className="relative group">
+        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+        <input
+          type="text"
+          placeholder="Rechercher par ville, acheteur ou mots-clés..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-14 pr-8 py-5 rounded-[28px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm shadow-sm transition-all"
+        />
+      </div>
+
+      {/* Table Container */}
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-[40px] border border-white dark:border-slate-800 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50">
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Métier</th>
                 <th 
-                  className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
+                  className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
                   onClick={() => toggleSort('objet')}
                 >
                   Marché {sortBy === 'objet' && (sortDir === 'asc' ? <ChevronUp className="inline ml-1" size={12} /> : <ChevronDown className="inline ml-1" size={12} />)}
                 </th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Acheteur</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Acheteur</th>
                 <th 
-                  className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors text-center"
-                  onClick={() => toggleSort('datePublication')}
-                >
-                  Publié le {sortBy === 'datePublication' && (sortDir === 'asc' ? <ChevronUp className="inline ml-1" size={12} /> : <ChevronDown className="inline ml-1" size={12} />)}
-                </th>
-                <th 
-                  className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors text-center"
+                  className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors text-center"
                   onClick={() => toggleSort('dateLimite')}
                 >
-                  Date Limite {sortBy === 'dateLimite' && (sortDir === 'asc' ? <ChevronUp className="inline ml-1" size={12} /> : <ChevronDown className="inline ml-1" size={12} />)}
+                  Échéance {sortBy === 'dateLimite' && (sortDir === 'asc' ? <ChevronUp className="inline ml-1" size={12} /> : <ChevronDown className="inline ml-1" size={12} />)}
                 </th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {loading && records.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <RefreshCw className="animate-spin text-primary" size={40} />
-                      <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Analyse des marchés en cours...</p>
-                    </div>
+                  <td colSpan={5} className="px-8 py-32 text-center">
+                    <RefreshCw className="animate-spin text-primary mx-auto mb-4" size={40} />
+                    <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Scanning flux...</p>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs italic">Aucun appel d'offres ne correspond à vos critères.</p>
+                  <td colSpan={5} className="px-8 py-32 text-center text-slate-400 font-bold italic text-sm">
+                    Aucun appel d'offres dans cette catégorie.
                   </td>
                 </tr>
               ) : (
@@ -252,107 +275,92 @@ export default function AppelsOffresPage() {
                   const daysUntil = getDaysUntil(r.dateLimite);
                   const isUrgent = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
                   const isExpired = daysUntil !== null && daysUntil < 0;
+                  const isFav = favorites.includes(r.id);
 
                   return (
-                    <motion.tr 
-                      key={r.id || idx}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isUrgent ? "bg-red-500/[0.02]" : ""}`}
-                    >
-                      <td className="px-6 py-6">
-                        <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap ${cpvInfo.bg} ${cpvInfo.color}`}>
+                    <tr key={r.id || idx} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                      <td className="px-8 py-8">
+                        <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm ${cpvInfo.bg} ${cpvInfo.color}`}>
                           {cpvInfo.label}
                         </span>
                       </td>
-                      <td className="px-6 py-6 max-w-md">
-                        <div className="flex flex-col gap-1">
+                      <td className="px-8 py-8 max-w-md">
+                        <div className="flex flex-col gap-2">
                           <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                             {r.objet}
                           </p>
                           {r.categories && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {(Array.isArray(r.categories) ? r.categories : r.categories.split(';'))
-                                .slice(0, 3)
-                                .map((cat: string, i: number) => (
-                                  <span key={i} className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-medium border border-slate-200 dark:border-slate-700">
-                                    {cat.trim()}
-                                  </span>
-                                ))}
-                              {(Array.isArray(r.categories) ? r.categories : r.categories.split(';')).length > 3 && (
-                                <span className="text-[9px] px-1.5 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-100">
-                                  +{(Array.isArray(r.categories) ? r.categories : r.categories.split(';')).length - 3}
+                            <div className="flex flex-wrap gap-1.5">
+                              {(Array.isArray(r.categories) ? r.categories : r.categories.split(';')).slice(0, 2).map((cat: string, i: number) => (
+                                <span key={i} className="text-[8px] px-2 py-0.5 bg-white dark:bg-slate-800 text-slate-500 rounded border border-slate-100 dark:border-slate-700 font-bold uppercase">
+                                  {cat.trim()}
                                 </span>
-                              )}
+                              ))}
                             </div>
                           )}
-                          <div className="flex items-center gap-3 mt-2">
-                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                              <MapPin size={10} /> {r.departement}
-                            </span>
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${r.source === 'BOAMP' ? 'text-blue-500' : 'text-green-500'}`}>
-                              {r.source}
+                          <div className="flex items-center gap-4 mt-1">
+                            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
+                              <MapPin size={12} className="text-primary/60" /> {r.departement}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-bold text-xs">
-                          <Building2 size={14} className="shrink-0" />
-                          <span className="line-clamp-1">{r.acheteur}</span>
+                      <td className="px-8 py-8">
+                        <div className="flex flex-col text-slate-600 dark:text-slate-400 font-bold text-xs">
+                          <div className="flex items-center gap-2">
+                            <Building2 size={14} className="shrink-0 text-slate-300" />
+                            <span className="line-clamp-1">{r.acheteur}</span>
+                          </div>
+                          <span className="text-[9px] text-slate-400 font-medium mt-1">Publié le {new Date(r.datePublication).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-center">
-                        <p className="text-xs font-bold text-slate-500">
-                          {r.datePublication ? new Date(r.datePublication).toLocaleDateString('fr-FR') : "N/C"}
-                        </p>
-                      </td>
-                      <td className="px-6 py-6 text-center">
-                        <div className="flex flex-col items-center">
+                      <td className="px-8 py-8 text-center">
+                        <div className="flex flex-col items-center gap-1">
                           <p className={`text-sm font-black ${isUrgent ? "text-red-500" : isExpired ? "text-slate-400" : "text-slate-900 dark:text-white"}`}>
                             {r.dateLimite ? new Date(r.dateLimite).toLocaleDateString('fr-FR') : "N/C"}
                           </p>
                           {daysUntil !== null && !isExpired && (
-                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isUrgent ? "text-red-500 animate-pulse" : "text-slate-400"}`}>
+                            <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isUrgent ? "bg-red-500 text-white animate-pulse" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
                               {daysUntil === 0 ? "Aujourd'hui" : `J-${daysUntil}`}
-                            </p>
+                            </div>
                           )}
-                          {isExpired && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expiré</p>}
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-right">
-                        <a
-                          href={r.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-black uppercase tracking-widest hover:scale-110 transition-transform active:scale-95"
-                        >
-                          Voir <ExternalLink size={12} />
-                        </a>
+                      <td className="px-8 py-8 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => toggleFavorite(r.id)}
+                            className={`p-3 rounded-2xl transition-all ${isFav ? "bg-amber-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-500"}`}
+                          >
+                            <Star size={16} fill={isFav ? "currentColor" : "none"} />
+                          </button>
+                          
+                          {activeTab === 'archive' ? (
+                            <button onClick={() => restoreFromArchive(r.id)} className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-green-500">
+                              <RefreshCw size={16} />
+                            </button>
+                          ) : (
+                            <button onClick={() => moveToArchive(r.id)} className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500">
+                              <Archive size={16} />
+                            </button>
+                          )}
+
+                          <a
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-5 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-primary transition-all"
+                          >
+                            VOIR
+                          </a>
+                        </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   );
                 })
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-      
-      {/* Legend & Help */}
-      <div className="flex flex-wrap items-center gap-6 px-6 py-4 rounded-[28px] bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-500" /> Urgence (&lt; 7j)
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500" /> BOAMP (France)
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500" /> TED (Europe)
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Euro size={12} /> Montants affichés si disponibles dans l'avis source.
         </div>
       </div>
     </div>
