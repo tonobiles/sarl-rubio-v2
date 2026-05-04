@@ -271,16 +271,18 @@ export default function AppelsOffresPage() {
                           <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                             {r.objet}
                           </p>
-                          {r.categories && typeof r.categories === 'string' && (
+                          {r.categories && (
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {r.categories.split(';').slice(0, 3).map((cat: string, i: number) => (
-                                <span key={i} className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-medium border border-slate-200 dark:border-slate-700">
-                                  {cat.trim()}
-                                </span>
-                              ))}
-                              {r.categories.split(';').length > 3 && (
+                              {(Array.isArray(r.categories) ? r.categories : r.categories.split(';'))
+                                .slice(0, 3)
+                                .map((cat: string, i: number) => (
+                                  <span key={i} className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-medium border border-slate-200 dark:border-slate-700">
+                                    {cat.trim()}
+                                  </span>
+                                ))}
+                              {(Array.isArray(r.categories) ? r.categories : r.categories.split(';')).length > 3 && (
                                 <span className="text-[9px] px-1.5 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-100">
-                                  +{r.categories.split(';').length - 3}
+                                  +{(Array.isArray(r.categories) ? r.categories : r.categories.split(';')).length - 3}
                                 </span>
                               )}
                             </div>
