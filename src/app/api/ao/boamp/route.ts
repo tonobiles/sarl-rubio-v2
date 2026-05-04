@@ -52,6 +52,7 @@ export async function GET(request: Request) {
       departement: r.code_departement || r.departement || '84',
       datePublication: r.dateparution,
       dateLimite: r.datelimitereponse,
+      dateFinDiffusion: r.datefindiffusion || null,
       cpv: r.cpv || (r.donnees?.cpv?.[0]?.code) || null,
       montant: r.montant || null,
       procedure: r.type_procedure || r.procedures || null,

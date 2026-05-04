@@ -216,7 +216,13 @@ export default function AppelsOffresPage() {
                 </th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Acheteur</th>
                 <th 
-                  className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
+                  className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors text-center"
+                  onClick={() => toggleSort('datePublication')}
+                >
+                  Publié le {sortBy === 'datePublication' && (sortDir === 'asc' ? <ChevronUp className="inline ml-1" size={12} /> : <ChevronDown className="inline ml-1" size={12} />)}
+                </th>
+                <th 
+                  className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors text-center"
                   onClick={() => toggleSort('dateLimite')}
                 >
                   Date Limite {sortBy === 'dateLimite' && (sortDir === 'asc' ? <ChevronUp className="inline ml-1" size={12} /> : <ChevronDown className="inline ml-1" size={12} />)}
@@ -281,8 +287,13 @@ export default function AppelsOffresPage() {
                           <span className="line-clamp-1">{r.acheteur}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col">
+                      <td className="px-6 py-6 text-center">
+                        <p className="text-xs font-bold text-slate-500">
+                          {r.datePublication ? new Date(r.datePublication).toLocaleDateString('fr-FR') : "N/C"}
+                        </p>
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <div className="flex flex-col items-center">
                           <p className={`text-sm font-black ${isUrgent ? "text-red-500" : isExpired ? "text-slate-400" : "text-slate-900 dark:text-white"}`}>
                             {r.dateLimite ? new Date(r.dateLimite).toLocaleDateString('fr-FR') : "N/C"}
                           </p>
