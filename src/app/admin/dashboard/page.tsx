@@ -57,6 +57,7 @@ export default function AdminDashboard() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
+              { title: "Radar AO Publics", icon: TrendingUp, href: "/admin/dashboard/appels-offres", color: "bg-blue-500/10 text-blue-500" },
               { title: "Ajouter un Chantier", icon: Camera, href: "/admin/dashboard/realisations/new", color: "bg-primary/10 text-primary" },
               { title: "Nouveau Partenaire", icon: Users, href: "/admin/dashboard/partners/new", color: "bg-primary/10 text-primary" },
               { title: "Profil & Sécurité", icon: Settings, href: "/admin/dashboard/settings", color: "bg-primary/10 text-primary" },

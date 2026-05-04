@@ -4,6 +4,7 @@ import Link from "next/link";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { label: "Vue d'ensemble", icon: LayoutDashboard, href: "/admin/dashboard" },
+    { label: "Appels d'Offres", icon: TrendingUp, href: "/admin/dashboard/appels-offres" },
     { label: "Chantiers", icon: Camera, href: "/admin/dashboard/realisations" },
     { label: "Partenaires", icon: Users, href: "/admin/dashboard/partners" },
   ];
