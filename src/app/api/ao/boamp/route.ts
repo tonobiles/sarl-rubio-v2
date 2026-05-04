@@ -22,7 +22,8 @@ export async function GET(request: Request) {
   // Mots-clés métiers pour un filtrage STRICT dans le titre
   const keywordsList = [
     'plomberie', 'chauffage', 'climatisation', 'pompe à chaleur', 
-    'sanitaire', 'vmc', 'chaudière', 'tuyauterie', 'génie climatique'
+    'sanitaire', 'vmc', 'chaudière', 'tuyauterie', 'génie climatique',
+    'électricité', 'électrique', 'courants forts', 'courants faibles', 'éclairage'
   ];
   
   const keywordFilter = keywordsList.map(k => `objet like '*${k}*'`).join(' OR ');
