@@ -268,10 +268,24 @@ export default function AppelsOffresPage() {
                       </td>
                       <td className="px-6 py-6 max-w-md">
                         <div className="flex flex-col gap-1">
-                          <p className="font-black text-slate-900 dark:text-white tracking-tight line-clamp-2 group-hover:text-primary transition-colors">
+                          <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                             {r.objet}
                           </p>
-                          <div className="flex items-center gap-3">
+                          {r.categories && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {r.categories.split(';').slice(0, 3).map((cat: string, i: number) => (
+                                <span key={i} className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-medium border border-slate-200 dark:border-slate-700">
+                                  {cat.trim()}
+                                </span>
+                              ))}
+                              {r.categories.split(';').length > 3 && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-100">
+                                  +{r.categories.split(';').length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-3 mt-2">
                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                               <MapPin size={10} /> {r.departement}
                             </span>

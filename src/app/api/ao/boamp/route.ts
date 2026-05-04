@@ -60,6 +60,7 @@ export async function GET(request: Request) {
       cpv: r.cpv || (r.donnees?.cpv?.[0]?.code) || null,
       montant: r.montant || null,
       procedure: r.type_procedure || r.procedures || null,
+      categories: r.descripteur_libelle || null,
       url: r.urlboamp || `https://www.boamp.fr/avis/detail/${r.idweb || r.id}`,
     }));
 
