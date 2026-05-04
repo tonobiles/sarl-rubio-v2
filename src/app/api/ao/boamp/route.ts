@@ -18,15 +18,18 @@ export async function GET(request: Request) {
 
   // Filtres géographiques (Vaucluse + limitrophes)
   const depts = "('84','13','30','26','05')";
-  const keywords = "('plomberie','chauffage','climatisation','pompe à chaleur','sanitaire','vmc')";
   
-  // On utilise une recherche plein texte croisée avec le département
-  const where = `code_departement in ${depts}`;
-  const searchKeywords = 'plomberie OR chauffage OR climatisation OR "pompe à chaleur" OR sanitaire OR vmc';
+  // Mots-clés métiers pour un filtrage STRICT dans le titre
+  const keywordsList = [
+    'plomberie', 'chauffage', 'climatisation', 'pompe à chaleur', 
+    'sanitaire', 'vmc', 'chaudière', 'tuyauterie', 'génie climatique'
+  ];
+  
+  const keywordFilter = keywordsList.map(k => `objet like '*${k}*'`).join(' OR ');
+  const where = `code_departement in ${depts} AND (${keywordFilter})`;
 
   const url = new URL('https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records');
   url.searchParams.set('where', where);
-  url.searchParams.set('search', searchKeywords);
   url.searchParams.set('limit', limit);
   url.searchParams.set('order_by', 'dateparution DESC');
   
