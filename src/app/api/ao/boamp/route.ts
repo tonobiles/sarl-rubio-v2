@@ -32,6 +32,7 @@ export async function GET(request: Request) {
   const url = new URL('https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records');
   url.searchParams.set('where', where);
   url.searchParams.set('limit', limit);
+  url.searchParams.set('offset', offset.toString());
   url.searchParams.set('order_by', 'dateparution DESC');
   
   console.log('Fetching BOAMP Final Version...');

@@ -90,25 +90,39 @@ export default function AppelsOffresPage() {
     localStorage.setItem('ao_hidden', JSON.stringify(hiddenIds));
   }, [favorites, hiddenIds]);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchAll = useCallback(async (isLoadMore = false) => {
+    if (!isLoadMore) {
+      setLoading(true);
+      setPage(1);
+    }
     setError(null);
     try {
-      const res = await fetch('/api/ao/boamp?limit=60');
+      const currentPage = isLoadMore ? page + 1 : 1;
+      const res = await fetch(`/api/ao/boamp?limit=40&page=${currentPage}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setRecords(data.records || []);
+      
+      const newRecords = data.records || [];
+      if (newRecords.length < 40) setHasMore(false);
+      else setHasMore(true);
+
+      setRecords(prev => isLoadMore ? [...prev, ...newRecords] : newRecords);
+      if (isLoadMore) setPage(currentPage);
+      
       setLastUpdate(new Date());
     } catch (e) {
       setError("Erreur de synchronisation avec le flux BOAMP.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     fetchAll();
-  }, [fetchAll]);
+  }, []); // On ne met pas fetchAll en dépendance ici pour éviter les boucles
 
   // Actions
   const toggleFavorite = (id: string) => {
@@ -362,6 +376,20 @@ export default function AppelsOffresPage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Load More Button */}
+        {hasMore && filtered.length > 0 && (
+          <div className="p-8 flex justify-center border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
+            <button
+              onClick={() => fetchAll(true)}
+              disabled={loading}
+              className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-black text-xs uppercase tracking-widest hover:border-primary hover:text-primary transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              {loading ? <RefreshCw size={16} className="animate-spin" /> : <ChevronDown size={18} />}
+              {loading ? "Chargement..." : "Afficher plus d'appels d'offres"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
