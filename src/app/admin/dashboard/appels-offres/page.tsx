@@ -197,7 +197,7 @@ export default function AppelsOffresPage() {
           </div>
           
           <button
-            onClick={fetchAll}
+            onClick={() => fetchAll()}
             disabled={loading}
             className="group relative flex items-center gap-4 px-8 py-5 rounded-3xl bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95 disabled:opacity-50 overflow-hidden"
           >
