@@ -1,12 +1,26 @@
-"use server";
+import { prisma } from "@/lib/prisma";
 
 export async function sendContactEmail(formData: FormData) {
   const name = formData.get("name") as string;
+  const email = formData.get("email") as string || "non@specifie.fr";
   const phone = formData.get("phone") as string;
   const service = formData.get("service") as string;
   const message = formData.get("message") as string;
 
-  const TO_EMAIL = "contact@sarl-rubio.fr";
+  try {
+    // 1. Enregistrement en base de données pour exploitation BO
+    await prisma.lead.create({
+      data: {
+        name,
+        email,
+        phone,
+        subject: service,
+        message,
+        status: "NEU"
+      }
+    });
+
+    const TO_EMAIL = "contact@sarl-rubio.fr";
 
   // Construction du template HTML premium
   const htmlTemplate = `
@@ -65,13 +79,15 @@ export async function sendContactEmail(formData: FormData) {
     </html>
   `;
 
-  console.log(`Sending beautiful email to ${TO_EMAIL}...`);
-  // console.log(htmlTemplate); // Debugging
-
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-
-  return { 
-    success: true, 
-    message: "Demande transmise avec succès !" 
-  };
+    return { 
+      success: true, 
+      message: "Demande transmise avec succès !" 
+    };
+  } catch (error) {
+    console.error("Contact form error:", error);
+    return {
+      success: false,
+      message: "Une erreur est survenue. Veuillez réessayer ou nous appeler directement."
+    };
+  }
 }

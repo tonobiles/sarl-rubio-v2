@@ -1,9 +1,10 @@
-import { LayoutDashboard, Camera, Users, TrendingUp, LogOut, ExternalLink, Shield } from "lucide-react";
+import { LayoutDashboard, Camera, Users, TrendingUp, LogOut, ExternalLink, Shield, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { label: "Vue d'ensemble", icon: LayoutDashboard, href: "/admin/dashboard" },
+    { label: "Demandes Clients", icon: MessageSquare, href: "/admin/dashboard/leads" },
     { label: "Appels d'Offres", icon: TrendingUp, href: "/admin/dashboard/appels-offres" },
     { label: "Chantiers", icon: Camera, href: "/admin/dashboard/realisations" },
     { label: "Partenaires", icon: Users, href: "/admin/dashboard/partners" },
