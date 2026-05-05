@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 export async function sendContactEmail(formData: FormData) {
   const name = formData.get("name") as string;
