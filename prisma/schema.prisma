@@ -39,7 +39,7 @@ model Testimonial {
 model Lead {
   id        String   @id @default(cuid())
   name      String
-  email     String
+  email     String?
   phone     String?
   subject   String?
   message   String

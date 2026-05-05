@@ -114,7 +114,7 @@ export default function ContactPage() {
                   }}
                   className="space-y-6"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Nom complet</label>
                       <input 
@@ -132,6 +132,15 @@ export default function ContactPage() {
                         type="tel" 
                         required
                         placeholder="06 00 00 00 00"
+                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 focus:border-primary outline-none transition-all font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">E-mail <span className="text-[8px] opacity-50 italic">(Facultatif)</span></label>
+                      <input 
+                        name="email"
+                        type="email" 
+                        placeholder="jean@exemple.fr"
                         className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 focus:border-primary outline-none transition-all font-medium"
                       />
                     </div>
