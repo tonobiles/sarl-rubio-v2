@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Inbox, 
   Search, 
@@ -14,18 +14,43 @@ import {
   Clock,
   AlertCircle,
   MoreVertical,
-  Trash2
+  Trash2,
+  Zap,
+  Trophy,
+  XCircle,
+  Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const STATUS_OPTIONS = [
+  { value: "NEU", label: "Nouveau", icon: Sparkles, color: "text-blue-500", bg: "bg-blue-50" },
+  { value: "EN_COURS", label: "En cours", icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
+  { value: "GAGNE", label: "Gagné", icon: Trophy, color: "text-green-500", bg: "bg-green-50" },
+  { value: "PERDU", label: "Perdu", icon: XCircle, color: "text-slate-400", bg: "bg-slate-50" },
+];
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchLeads();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchLeads = async () => {
@@ -38,6 +63,46 @@ export default function LeadsPage() {
       console.error("Failed to fetch leads");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateLeadStatus = async (leadId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/admin/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        setLeads(prev =>
+          prev.map(lead =>
+            lead.id === leadId ? { ...lead, status: newStatus } : lead
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update lead status");
+    } finally {
+      setOpenMenuId(null);
+    }
+  };
+
+  const deleteLead = async (leadId: string) => {
+    setDeletingId(leadId);
+    try {
+      const res = await fetch(`/api/admin/leads/${leadId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setLeads(prev => prev.filter(lead => lead.id !== leadId));
+      }
+    } catch (error) {
+      console.error("Failed to delete lead");
+    } finally {
+      setDeletingId(null);
+      setOpenMenuId(null);
     }
   };
 
@@ -58,7 +123,7 @@ export default function LeadsPage() {
 
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(search.toLowerCase()) || 
-                         lead.email.toLowerCase().includes(search.toLowerCase()) ||
+                         (lead.email || "").toLowerCase().includes(search.toLowerCase()) ||
                          lead.message.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filterStatus === "ALL" || lead.status === filterStatus;
     return matchesSearch && matchesFilter;
@@ -168,9 +233,78 @@ export default function LeadsPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                       <button className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary transition-all">
-                          <MoreVertical size={16} />
-                       </button>
+                       <div className="relative inline-block" ref={openMenuId === lead.id ? menuRef : undefined}>
+                         <button 
+                           onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
+                           className={`p-2 rounded-xl transition-all ${
+                             openMenuId === lead.id 
+                               ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                               : "bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary"
+                           }`}
+                         >
+                            <MoreVertical size={16} />
+                         </button>
+
+                         {/* Dropdown Menu */}
+                         <AnimatePresence>
+                           {openMenuId === lead.id && (
+                             <motion.div
+                               initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                               animate={{ opacity: 1, scale: 1, y: 0 }}
+                               exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                               transition={{ duration: 0.15 }}
+                               className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-black/30 z-50 overflow-hidden"
+                             >
+                               {/* Status section */}
+                               <div className="p-2">
+                                 <p className="px-3 py-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                                   Changer le statut
+                                 </p>
+                                 {STATUS_OPTIONS.filter(opt => opt.value !== lead.status).map(opt => {
+                                   const Icon = opt.icon;
+                                   return (
+                                     <button
+                                       key={opt.value}
+                                       onClick={() => updateLeadStatus(lead.id, opt.value)}
+                                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:${opt.bg} transition-colors group/item`}
+                                     >
+                                       <div className={`w-7 h-7 rounded-lg ${opt.bg} flex items-center justify-center ${opt.color}`}>
+                                         <Icon size={14} />
+                                       </div>
+                                       <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                         {opt.label}
+                                       </span>
+                                     </button>
+                                   );
+                                 })}
+                               </div>
+
+                               {/* Divider */}
+                               <div className="h-px bg-slate-100 dark:bg-slate-800 mx-3" />
+
+                               {/* Delete */}
+                               <div className="p-2">
+                                 <button
+                                   onClick={() => {
+                                     if (confirm(`Supprimer la demande de "${lead.name}" ? Cette action est irréversible.`)) {
+                                       deleteLead(lead.id);
+                                     }
+                                   }}
+                                   disabled={deletingId === lead.id}
+                                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                 >
+                                   <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-500">
+                                     <Trash2 size={14} />
+                                   </div>
+                                   <span className="text-xs font-bold text-red-500">
+                                     {deletingId === lead.id ? "Suppression..." : "Supprimer"}
+                                   </span>
+                                 </button>
+                               </div>
+                             </motion.div>
+                           )}
+                         </AnimatePresence>
+                       </div>
                     </td>
                   </motion.tr>
                 ))
