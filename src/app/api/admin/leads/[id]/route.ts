@@ -11,7 +11,7 @@ export async function PATCH(
     const body = await request.json();
     const { status } = body;
 
-    if (!["NEU", "EN_COURS", "GAGNE", "PERDU"].includes(status)) {
+    if (!["NEU", "LU", "ARCHIVE"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 

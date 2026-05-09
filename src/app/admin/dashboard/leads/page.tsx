@@ -1,33 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { 
   Inbox, 
   Search, 
   Calendar, 
   Phone, 
   Mail, 
-  MessageSquare,
-  ChevronRight,
-  Filter,
-  CheckCircle2,
-  Clock,
   AlertCircle,
   MoreVertical,
   Trash2,
-  Zap,
-  Trophy,
-  XCircle,
-  Sparkles
+  Eye,
+  Archive,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const STATUS_OPTIONS = [
-  { value: "NEU", label: "Nouveau", icon: Sparkles, color: "text-blue-500", bg: "bg-blue-50" },
-  { value: "EN_COURS", label: "En cours", icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
-  { value: "GAGNE", label: "Gagné", icon: Trophy, color: "text-green-500", bg: "bg-green-50" },
-  { value: "PERDU", label: "Perdu", icon: XCircle, color: "text-slate-400", bg: "bg-slate-50" },
-];
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -36,22 +23,12 @@ export default function LeadsPage() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchLeads();
   }, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const selectedLead = leads.find(l => l.id === openMenuId);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -110,12 +87,10 @@ export default function LeadsPage() {
     switch (status) {
       case "NEU":
         return <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Nouveau</span>;
-      case "EN_COURS":
-        return <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">En cours</span>;
-      case "GAGNE":
-        return <span className="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Gagné</span>;
-      case "PERDU":
-        return <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">Perdu</span>;
+      case "LU":
+        return <span className="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Lu</span>;
+      case "ARCHIVE":
+        return <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">Archivé</span>;
       default:
         return null;
     }
@@ -171,9 +146,8 @@ export default function LeadsPage() {
         >
           <option value="ALL">Tous les statuts</option>
           <option value="NEU">Nouveaux</option>
-          <option value="EN_COURS">En cours</option>
-          <option value="GAGNE">Gagnés</option>
-          <option value="PERDU">Perdus</option>
+          <option value="LU">Lus</option>
+          <option value="ARCHIVE">Archivés</option>
         </select>
       </div>
 
@@ -233,78 +207,12 @@ export default function LeadsPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                       <div className="relative inline-block" ref={openMenuId === lead.id ? menuRef : undefined}>
-                         <button 
-                           onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
-                           className={`p-2 rounded-xl transition-all ${
-                             openMenuId === lead.id 
-                               ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                               : "bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary"
-                           }`}
-                         >
-                            <MoreVertical size={16} />
-                         </button>
-
-                         {/* Dropdown Menu */}
-                         <AnimatePresence>
-                           {openMenuId === lead.id && (
-                             <motion.div
-                               initial={{ opacity: 0, scale: 0.9, y: -4 }}
-                               animate={{ opacity: 1, scale: 1, y: 0 }}
-                               exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                               transition={{ duration: 0.15 }}
-                               className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-black/30 z-50 overflow-hidden"
-                             >
-                               {/* Status section */}
-                               <div className="p-2">
-                                 <p className="px-3 py-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                                   Changer le statut
-                                 </p>
-                                 {STATUS_OPTIONS.filter(opt => opt.value !== lead.status).map(opt => {
-                                   const Icon = opt.icon;
-                                   return (
-                                     <button
-                                       key={opt.value}
-                                       onClick={() => updateLeadStatus(lead.id, opt.value)}
-                                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:${opt.bg} transition-colors group/item`}
-                                     >
-                                       <div className={`w-7 h-7 rounded-lg ${opt.bg} flex items-center justify-center ${opt.color}`}>
-                                         <Icon size={14} />
-                                       </div>
-                                       <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                         {opt.label}
-                                       </span>
-                                     </button>
-                                   );
-                                 })}
-                               </div>
-
-                               {/* Divider */}
-                               <div className="h-px bg-slate-100 dark:bg-slate-800 mx-3" />
-
-                               {/* Delete */}
-                               <div className="p-2">
-                                 <button
-                                   onClick={() => {
-                                     if (confirm(`Supprimer la demande de "${lead.name}" ? Cette action est irréversible.`)) {
-                                       deleteLead(lead.id);
-                                     }
-                                   }}
-                                   disabled={deletingId === lead.id}
-                                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                                 >
-                                   <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-500">
-                                     <Trash2 size={14} />
-                                   </div>
-                                   <span className="text-xs font-bold text-red-500">
-                                     {deletingId === lead.id ? "Suppression..." : "Supprimer"}
-                                   </span>
-                                 </button>
-                               </div>
-                             </motion.div>
-                           )}
-                         </AnimatePresence>
-                       </div>
+                       <button 
+                         onClick={() => setOpenMenuId(lead.id)}
+                         className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
+                       >
+                          <MoreVertical size={16} />
+                       </button>
                     </td>
                   </motion.tr>
                 ))
@@ -323,6 +231,126 @@ export default function LeadsPage() {
           Astuce : Pensez à mettre à jour le statut des demandes après avoir rappelé vos clients pour un meilleur suivi commercial.
         </p>
       </div>
+
+      {/* ===== MODALE ACTIONS ===== */}
+      <AnimatePresence>
+        {selectedLead && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setOpenMenuId(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="p-6 pb-4 flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    {getStatusBadge(selectedLead.status)}
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white truncate">
+                    {selectedLead.name}
+                  </h3>
+                  <div className="flex items-center gap-4 mt-1">
+                    {selectedLead.email && (
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <Mail size={12} /> {selectedLead.email}
+                      </span>
+                    )}
+                    {selectedLead.phone && (
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <Phone size={12} /> {selectedLead.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOpenMenuId(null)}
+                  className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Message */}
+              <div className="px-6 pb-4">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">
+                    {selectedLead.subject || "Message"}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 italic leading-relaxed">
+                    "{selectedLead.message}"
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="px-6 pb-6 space-y-2">
+                {selectedLead.status !== "LU" && (
+                  <button
+                    onClick={() => updateLeadStatus(selectedLead.id, "LU")}
+                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-green-50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+                      <Eye size={18} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black text-green-700 dark:text-green-400">Marquer comme Lu</p>
+                      <p className="text-[10px] text-green-600/60 dark:text-green-500/50 font-medium">La demande a été consultée</p>
+                    </div>
+                  </button>
+                )}
+
+                {selectedLead.status !== "ARCHIVE" && (
+                  <button
+                    onClick={() => updateLeadStatus(selectedLead.id, "ARCHIVE")}
+                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-slate-500 text-white flex items-center justify-center shadow-lg shadow-slate-500/20">
+                      <Archive size={18} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black text-slate-700 dark:text-slate-300">Archiver</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Déplacer dans les archives</p>
+                    </div>
+                  </button>
+                )}
+
+                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+
+                <button
+                  onClick={() => {
+                    if (confirm(`Supprimer la demande de "${selectedLead.name}" ? Cette action est irréversible.`)) {
+                      deleteLead(selectedLead.id);
+                    }
+                  }}
+                  disabled={deletingId === selectedLead.id}
+                  className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
+                    <Trash2 size={18} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-black text-red-500">
+                      {deletingId === selectedLead.id ? "Suppression..." : "Supprimer"}
+                    </p>
+                    <p className="text-[10px] text-red-400/60 font-medium">Action irréversible</p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
